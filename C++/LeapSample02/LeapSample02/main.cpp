@@ -111,6 +111,19 @@ public:
                       << std::endl;
         }
 #endif
+
+#if 1
+        // 親指の定義を確認する
+        for ( auto finger : frame.fingers() ) {
+            if ( finger.type() == Leap::Finger::Type::TYPE_THUMB ){
+                for ( int t = Leap::Bone::TYPE_METACARPAL; t <= (int)Leap::Bone::TYPE_DISTAL; ++t ){
+                    // 末節骨(指先の骨)
+                    auto bone = finger.bone( (Leap::Bone::Type)t );
+                    std::cout << "種類 : " << bone.type() << " 長さ : " << bone.length() << std::endl;
+                }
+            }
+        }
+#endif
     }
 };
 
