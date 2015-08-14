@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Leap;
 
 namespace LeapSample02
 {
@@ -16,15 +17,16 @@ namespace LeapSample02
             {
                 var frame = leap.Frame();
 
-#if true
+#if false
                 // 今回のフレームで検出したすべての手、指、ツール
                 HandList hands = frame.Hands;
                 FingerList fingers = frame.Fingers;
                 ToolList tools = frame.Tools;
                 PointableList pointables = frame.Pointables;
-
-                Console.WriteLine( string.Format( "手 : {0} 指 : {1} ツール : {2} ポインタ : {3}",
-                    hands.Count, fingers.Count, tools.Count, pointables.Count ) );
+                
+                Console.WriteLine( string.Format( 
+                    "Frame Data : Hands : {0} Fingers : {1} Extended Fingers : {2} Tools : {3} Pointers : {4}",
+                        hands.Count, fingers.Count, fingers.Extended().Count, tools.Count, pointables.Count ) );
 #endif
 
 #if false
@@ -53,7 +55,7 @@ namespace LeapSample02
                     leftMost.PalmPosition, rightMost.PalmPosition, frontMost.PalmPosition ) );
 #endif
 
-#if false
+#if true
                 // 手に属している指とツールを取得する
                 foreach ( var hand in frame.Hands ) {
                     Console.WriteLine( string.Format( "ID : {0} ポインタ : {1} 指: {2} ツール : {3}",
