@@ -55,7 +55,7 @@ namespace LeapSample02
                     leftMost.PalmPosition, rightMost.PalmPosition, frontMost.PalmPosition ) );
 #endif
 
-#if true
+#if false
                 // 手に属している指とツールを取得する
                 foreach ( var hand in frame.Hands ) {
                     Console.WriteLine( string.Format( "ID : {0} ポインタ : {1} 指: {2} ツール : {3}",
@@ -65,10 +65,34 @@ namespace LeapSample02
 
 #if false
                 // 指の情報を表示する
-                Finger finger = frame.Fingers[0];
-                Console.WriteLine( string.Format( "ID : {0} 位置 : {1} 速度 : {2} 向き : {3}",
-                    finger.Id, finger.TipPosition, finger.TipVelocity, finger.Direction ) );
+                foreach ( var finger in frame.Fingers ) {
+                    Console.WriteLine( string.Format( "ID : {0} 種類 : {1} 位置 : {2} 速度 : {3} 向き : {4}",
+                        finger.Id, finger.Type, finger.TipPosition, finger.TipVelocity, finger.Direction ) );
+                }
 #endif
+
+#if false
+                // 指の関節情報を取得する
+                foreach ( var finger in frame.Fingers ) {
+                    // 末節骨(指先の骨)
+                    var bone = finger.Bone( Bone.BoneType.TYPE_DISTAL );
+                    Console.WriteLine(string.Format("種類 : {0} 中心 : {1} 上端 : {2} 下端 : {3}",
+                        bone.Type, bone.Center, bone.PrevJoint, bone.NextJoint ));
+                }
+#endif
+
+#if true
+                // 親指の定義を確認する
+                foreach ( var finger in frame.Fingers ) {
+                    if ( finger.Type == Finger.FingerType.TYPE_THUMB ) {
+                        for ( int t = (int)Bone.BoneType.TYPE_METACARPAL; t <= (int)Bone.BoneType.TYPE_DISTAL; t++ ) {
+                            var bone = finger.Bone( (Bone.BoneType)t );
+                            Console.WriteLine( string.Format( "種類 : {0} 長さ : {1}", bone.Type, bone.Length ) );
+                        }
+                    }
+                }
+#endif
+
             }
         }
 
