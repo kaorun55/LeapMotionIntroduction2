@@ -38,9 +38,9 @@ namespace LeapSample03
             foreach ( Pointable pointable in leap.Frame().Pointables ) {
                 // ここから追加
                 // 伸びている指、ツール以外は無視する
-                if ( !pointable.IsExtended ) {
-                    continue;
-                }
+                //if ( !pointable.IsExtended ) {
+                //    continue;
+                //}
                 // ここまで追加
 
                 Leap.Vector normalizedPosition = 
@@ -49,7 +49,7 @@ namespace LeapSample03
                 float ty = windowHeight - normalizedPosition.y * windowHeight;
 
                 int alpha = 255;
-                if ( (pointable.TouchDistance > 0 && pointable.TouchZone != Pointable.Zone.ZONENONE ) {
+                if ( (pointable.TouchDistance > 0 && pointable.TouchZone != Pointable.Zone.ZONENONE ) ) {
                     alpha = 255 - (int)(255 * pointable.TouchDistance);
                     touchIndicator.Color = Color.FromArgb( (byte)alpha, 0x0, 0xff, 0x0 );
                 }
