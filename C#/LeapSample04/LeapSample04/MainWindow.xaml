@@ -1,0 +1,19 @@
+﻿<Window x:Class="LeapSample04.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Loaded="Window_Loaded"
+        Title="LeapSample04" SizeToContent="WidthAndHeight">
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <Grid x:Name="GridLeft" >
+                <Image x:Name="ImageLeft" />
+                <Canvas x:Name="CanvasLeft"/>
+            </Grid>
+
+            <Grid x:Name="GridRight">
+                <Image x:Name="ImageRight" />
+                <Canvas x:Name="CanvasRight"/>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Window>
