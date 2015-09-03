@@ -39,12 +39,14 @@ namespace LeapSample04
 
         void CompositionTarget_Rendering( object sender, EventArgs e )
         {
-            //RawImages();
-
+#if false
+            RawImages();
+#else
             CalibrationImage();
+#endif
         }
 
-#region 位置補正した画像
+        #region 位置補正した画像
         private void CalibrationImage()
         {
             var frame = leap.Frame();
@@ -71,7 +73,7 @@ namespace LeapSample04
 
                 // 指の座標を表示する
                 var leftPoints = MapCalibratedCameraToColor( images[0], fongers, targetWidth * scale, targetHeight * scale );
-                DrawPoints( CanvasLeft, leftPoints );
+                //DrawPoints( CanvasLeft, leftPoints );
             }
 
             // 右カメラ
@@ -81,7 +83,7 @@ namespace LeapSample04
 
                 // 指の座標を表示する
                 var rightPoints = MapCalibratedCameraToColor( images[1], fongers, targetWidth * scale, targetHeight * scale );
-                DrawPoints( CanvasRight, rightPoints );
+                //DrawPoints( CanvasRight, rightPoints );
             }
 
             Trace.WriteLine( sw.ElapsedMilliseconds );
@@ -141,7 +143,7 @@ namespace LeapSample04
 
             return colorPoints.ToArray();
         }
-#endregion
+        #endregion
 
         #region 生画像の取得と表示
         private void RawImages()
@@ -217,18 +219,20 @@ namespace LeapSample04
         /// <param name="leftPoints"></param>
         private static void DrawPoints( Canvas canvas, Leap.Vector[] leftPoints )
         {
+            int R = 5;
+
             canvas.Children.Clear();
             foreach ( var point in leftPoints ) {
                 // Canvasに表示する
                 var ellipse = new Ellipse()
                 {
-                    Width = 10,
-                    Height = 10,
-                    Fill = Brushes.Red,
+                    Width = R * 2,
+                    Height = R * 2,
+                    Fill = Brushes.White,
                 };
 
-                Canvas.SetLeft( ellipse, point.x );
-                Canvas.SetTop( ellipse, point.y );
+                Canvas.SetLeft( ellipse, point.x - R );
+                Canvas.SetTop( ellipse, point.y - R );
 
                 canvas.Children.Add( ellipse );
             }
