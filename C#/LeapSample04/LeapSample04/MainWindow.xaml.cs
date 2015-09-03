@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -40,54 +41,116 @@ namespace LeapSample04
         {
             //RawImages();
 
-            {
-                var frame = leap.Frame();
-                var images = frame.Images;
-                var fongers = frame.Fingers;
+            CalibrationImage();
+        }
 
-                //Draw the undistorted image using the warp() function
-                int targetWidth = 400;
-                int targetHeight = 400;
+#region 位置補正した画像
+        private void CalibrationImage()
+        {
+            var frame = leap.Frame();
+            var images = frame.Images;
+            var fongers = frame.Fingers;
 
-                GridLeft.Width = GridRight.Width = targetWidth;
-                GridLeft.Height = GridRight.Height = targetHeight;
+            //Draw the undistorted image using the warp() function
+            // Warp()が速度低下につながるため、解像度を落としている
+            int targetWidth = 100;
+            int targetHeight = 100;
+            int scale = 400 / targetWidth;
 
-                var image = images[0];
+            // グリッドのサイズを設定する
+            GridLeft.Width = GridRight.Width = targetWidth * scale;
+            GridLeft.Height = GridRight.Height = targetHeight * scale;
 
-                WriteableBitmap writeableBmp = BitmapFactory.New( targetWidth, targetHeight );
+            Stopwatch sw = new Stopwatch();
+            sw.Restart();
 
-                //Iterate over target image pixels, converting xy to ray slope
-                for ( float y = 0; y < targetHeight; y++ ) {
-                    for ( float x = 0; x < targetWidth; x++ ) {
-                        //Normalize from pixel xy to range [0..1]
-                        var input = new Leap.Vector( x / targetWidth, y / targetHeight, 0 );
+            // 左カメラ
+            if ( images[0].IsValid ) {
+                // カメラ画像を表示する
+                ImageLeft.Source = ToCalibratedBitmap( targetWidth, targetHeight, images[0] );
 
-                        //Convert from normalized [0..1] to slope [-4..4]
-                        input.x = (input.x - image.RayOffsetX) / image.RayScaleX;
-                        input.y = (input.y - image.RayOffsetY) / image.RayScaleY;
+                // 指の座標を表示する
+                var leftPoints = MapCalibratedCameraToColor( images[0], fongers, targetWidth * scale, targetHeight * scale );
+                DrawPoints( CanvasLeft, leftPoints );
+            }
 
-                        //Use slope to get coordinates of point in image.Data containing the brightness for this target pixel
-                        var pixel = image.Warp( Leap.Vector.Zero);
+            // 右カメラ
+            if ( images[1].IsValid ) {
+                // カメラ画像を表示する
+                ImageRight.Source = ToCalibratedBitmap( targetWidth, targetHeight, images[1] );
 
-                        if ( pixel.x >= 0 && pixel.x < image.Width && pixel.y >= 0 && pixel.y < image.Height ) {
-                            int dataIndex = (int)(Math.Floor( pixel.y ) * image.Width + Math.Floor( pixel.x )); //xy to buffer index
-                            byte brightness = image.Data[dataIndex];
-                            writeableBmp.SetPixel( (int)x, (int)y, Color.FromArgb( 255, brightness, brightness, brightness ) );
-                        }
-                        else {
-                            writeableBmp.SetPixel( (int)x, (int)y, Colors.Red );
-                        }
+                // 指の座標を表示する
+                var rightPoints = MapCalibratedCameraToColor( images[1], fongers, targetWidth * scale, targetHeight * scale );
+                DrawPoints( CanvasRight, rightPoints );
+            }
+
+            Trace.WriteLine( sw.ElapsedMilliseconds );
+        }
+
+        private static BitmapSource ToCalibratedBitmap( int targetWidth, int targetHeight, Leap.Image image )
+        {
+            var buffer = new byte[targetWidth * targetHeight];
+
+            //Iterate over target image pixels, converting xy to ray slope
+            for ( int y = 0; y < targetHeight; y++ ) {
+                for ( int x = 0; x < targetWidth; x++ ) {
+                    //Normalize from pixel xy to range [0..1]
+                    var input = new Leap.Vector( x / (float)targetWidth, y / (float)targetHeight, 0 );
+
+                    //Convert from normalized [0..1] to slope [-4..4]
+                    input.x = (input.x - image.RayOffsetX) / image.RayScaleX;
+                    input.y = (input.y - image.RayOffsetY) / image.RayScaleY;
+
+                    //Use slope to get coordinates of point in image.Data containing the brightness for this target pixel
+                    var pixel = image.Warp( input );
+
+                    int bufferIndex = (y * targetWidth) + x;
+
+                    if ( pixel.x >= 0 && pixel.x < image.Width && pixel.y >= 0 && pixel.y < image.Height ) {
+                        int dataIndex = (int)(Math.Floor( pixel.y ) * image.Width + Math.Floor( pixel.x )); //xy to buffer index
+                        buffer[bufferIndex] = image.Data[dataIndex];
+                    }
+                    else {
+                        buffer[bufferIndex] = 255;
                     }
                 }
             }
+
+            return BitmapSource.Create( targetWidth, targetHeight, 96, 96,
+                    PixelFormats.Gray8, null, buffer, targetWidth );
         }
 
+        private static Leap.Vector[] MapCalibratedCameraToColor( Leap.Image image, FingerList fingers,
+                                                                    int targetWidth, int targetHeight )
+        {
+            var colorPoints =new List<Leap.Vector>();
+
+            float cameraXOffset = 20; //millimeters
+
+            foreach ( Finger finger in fingers ) {
+                var tip = finger.TipPosition;
+                float hSlope = -(tip.x + cameraXOffset * (2 * image.Id - 1)) / tip.y;
+                float vSlope = tip.z / tip.y;
+
+                var ray = new Leap.Vector( hSlope * image.RayScaleX + image.RayOffsetX,
+                                     vSlope * image.RayScaleY + image.RayOffsetY, 0 );
+
+                //Pixel coordinates from [0..1] to [0..width/height]
+                colorPoints.Add( new Leap.Vector( ray.x * targetWidth, ray.y * targetHeight, 0 ) );
+            }
+
+            return colorPoints.ToArray();
+        }
+#endregion
+
+        #region 生画像の取得と表示
         private void RawImages()
         {
             var frame = leap.Frame();
             var images = frame.Images;
             var fongers = frame.Fingers;
 
+            // グリッドのサイズを設定する
             GridLeft.Width = GridRight.Width = images[0].Width;
             GridLeft.Height = GridRight.Height = images[0].Height;
 
@@ -145,6 +208,7 @@ namespace LeapSample04
 
             return colorPoints.ToArray();
         }
+        #endregion
 
         /// <summary>
         /// 点を描画する
